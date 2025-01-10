@@ -5206,6 +5206,17 @@ let timeRemaining = 30 * 60; // 30 minutes in seconds
 let incorrectAnswers = 0; // Track incorrect answers
 const maxIncorrectAnswers = 2; // Allow up to 2 incorrect answers
 
+// Function to send results to Storyline
+function sendTestResultsToStoryline(status) {
+    const message = {
+        type: 'testResults',
+        status: status, // 'passed' or 'not passed'
+    };
+    window.parent.postMessage(message, '*'); // Send message to parent frame (Storyline)
+}
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("loginForm");
     const loginError = document.getElementById("loginError");
@@ -5764,14 +5775,6 @@ function logout() {
 }
 
 
-// Function to send results to Storyline
-function sendTestResultsToStoryline(status) {
-    const message = {
-        type: 'testResults',
-        status: status, // 'passed' or 'not passed'
-    };
-    window.parent.postMessage(message, '*'); // Send message to parent frame (Storyline)
-}
 
 
 // Example usage
