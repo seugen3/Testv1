@@ -5322,6 +5322,7 @@ function showResults() {
     // Determine pass/fail status
     const passThreshold = 90; // Adjust threshold if needed
     const status = score >= passThreshold ? 'passed' : 'not passed';
+    console.log(status);
 
     // Send the result to Storyline
     sendTestResultsToStoryline(status);
