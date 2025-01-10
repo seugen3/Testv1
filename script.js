@@ -5207,10 +5207,6 @@ let incorrectAnswers = 0; // Track incorrect answers
 const maxIncorrectAnswers = 2; // Allow up to 2 incorrect answers
 
 
-if (!localStorage.getItem("users")) {
-    localStorage.setItem("users", JSON.stringify(users));
-}
-
 document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("loginForm");
     const loginError = document.getElementById("loginError");
