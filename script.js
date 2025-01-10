@@ -5213,6 +5213,7 @@ function sendTestResultsToStoryline(status) {
         status: status, // 'passed' or 'not passed'
     };
     window.parent.postMessage(message, '*'); // Send message to parent frame (Storyline)
+    console.log(status);
 }
 
 
