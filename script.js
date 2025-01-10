@@ -5307,12 +5307,19 @@ function showResults() {
     const totalQuestions = randomizedQuestions.length;
     const score = Math.round((correctAnswers / totalQuestions) * 100);
 
+    // Determine pass/fail status
+    const passThreshold = 90; // Adjust threshold if needed
+    const status = score >= passThreshold ? 'passed' : 'not passed';
+
+    // Send the result to Storyline
+    sendTestResultsToStoryline(status);
+
     // Update DOM elements for results
     const resultMessage = document.getElementById('resultMessage');
     const scoreMessage = document.getElementById('scoreMessage');
     const reviewList = document.getElementById('reviewList');
 
-    resultMessage.innerText = score >= 90 ? 'Ai trecut testul! Felicitări!' : 'Nu ai trecut testul. Încearcă din nou!';
+    resultMessage.innerText = status === 'passed' ? 'Ai trecut testul! Felicitări!' : 'Nu ai trecut testul. Încearcă din nou!';
     scoreMessage.innerText = `Scorul tău: ${score}%`;
 
     reviewList.innerHTML = '';
@@ -5330,6 +5337,7 @@ function showResults() {
     resultsPage.classList.remove('hidden');
     console.log("Results page should now be visible.");
 }
+
 
 // Restart the test
 function restartTest() {
@@ -5752,8 +5760,19 @@ function loadAdminDashboard() {
 // Logout function
 function logout() {
     localStorage.removeItem("currentUser");
-    window.location.href = "landing.html";
+    window.location.href = "index.html";
 }
+
+
+// Function to send results to Storyline
+function sendTestResultsToStoryline(status) {
+    const message = {
+        type: 'testResults',
+        status: status, // 'passed' or 'not passed'
+    };
+    window.parent.postMessage(message, '*'); // Send message to parent frame (Storyline)
+}
+
 
 // Example usage
 // Call `saveAnswer('q1', true)` when a user answers a question.
