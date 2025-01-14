@@ -187,17 +187,52 @@ body {
   cursor: pointer;
 }
 
-.back-button {
-  background-color: #C12033;
-  color: white;
-  font-weight: 600;
+/* Common Button Styling */
+.back-button,
+.next-button {
+    font-size: 20px; /* Increase font size */
+    padding: 18px 25px; /* Add more padding for a larger button */
+    border-radius: 10px; /* More rounded corners */
+    color: white; /* White text */
+    border: none; /* Remove border */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease; /* Smooth hover effect */
+    font-weight: bold; /* Bold text for better readability */
 }
 
-.next-button {
-  background-color: #388e3c;
-  color: white;
-  font-weight: 600;
+/* Back Button (Red) */
+.back-button {
+    background-color: #C12033; /* Original red color */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
 }
+
+.back-button:hover {
+    background-color: #a81a2a; /* Slightly darker red on hover */
+    transform: scale(1.08); /* Enlarge slightly on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* More pronounced shadow */
+}
+
+.back-button:active {
+    transform: scale(0.96); /* Slightly shrink on click */
+}
+
+/* Next Button (Green) */
+.next-button {
+    background-color: #388e3c; /* Original green color */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+.next-button:hover {
+    background-color: #218838; /* Slightly darker green on hover */
+    transform: scale(1.08); /* Enlarge slightly on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* More pronounced shadow */
+}
+
+.next-button:active {
+    transform: scale(0.96); /* Slightly shrink on click */
+}
+
+
 
 .modal {
   display: none;
