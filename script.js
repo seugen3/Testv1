@@ -5321,18 +5321,42 @@ function showResults() {
 
     // Determine pass/fail status
     const passThreshold = 90; // Adjust threshold if needed
-    const status = score >= passThreshold ? 'passed' : 'not passed';
-    console.log("status");
+    const status = score >= passThreshold ? 'Passed' : 'Failed';
 
-    // Send the result to Storyline
-    sendTestResultsToStoryline(status);
+    // Save the result to the user's attempts
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    const storedUsers = JSON.parse(localStorage.getItem("users"));
+
+    // Add a new attempt to the current user's data
+    const attempt = {
+        id: `attempt${(currentUser.attempts?.length || 0) + 1}`,
+        date: new Date().toLocaleString(),
+        score: score,
+        status: status,
+        answers: userAnswers.map(answer => ({
+            question: answer.question,
+            selectedOption: answer.selectedOption,
+            correctOption: answer.correctOption
+        }))
+    };
+
+    if (!currentUser.attempts) {
+        currentUser.attempts = [];
+    }
+    currentUser.attempts.push(attempt);
+
+    // Update the global users list
+    const userIndex = storedUsers.findIndex(u => u.id === currentUser.id);
+    storedUsers[userIndex] = currentUser;
+    localStorage.setItem("users", JSON.stringify(storedUsers));
+    localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
     // Update DOM elements for results
     const resultMessage = document.getElementById('resultMessage');
     const scoreMessage = document.getElementById('scoreMessage');
     const reviewList = document.getElementById('reviewList');
 
-    resultMessage.innerText = status === 'passed' ? 'Ai trecut testul! Felicitări!' : 'Nu ai trecut testul. Încearcă din nou!';
+    resultMessage.innerText = status === 'Passed' ? 'Ai trecut testul! Felicitări!' : 'Nu ai trecut testul. Încearcă din nou!';
     scoreMessage.innerText = `Scorul tău: ${score}%`;
 
     reviewList.innerHTML = '';
@@ -5350,6 +5374,7 @@ function showResults() {
     resultsPage.classList.remove('hidden');
     console.log("Results page should now be visible.");
 }
+
 
 
 // Restart the test
@@ -5715,58 +5740,135 @@ function saveAnswer(questionId, isCorrect) {
 
 // Admin view function
 function loadAdminDashboard() {
-    const storedUsers = JSON.parse(localStorage.getItem("users")); // Fetch user data from local storage
-    const resultsContainer = document.getElementById("resultsContainer"); // Admin results container
-
+    const storedUsers = JSON.parse(localStorage.getItem("users"));
+    const resultsContainer = document.getElementById("resultsContainer");
     resultsContainer.innerHTML = ""; // Clear previous content
 
-    if (!randomizedQuestions || randomizedQuestions.length === 0) {
-        resultsContainer.innerHTML = "<p>No question data available. Ensure randomizedQuestions is defined.</p>";
-        console.error("RandomizedQuestions is not defined or empty!");
+    if (!storedUsers || storedUsers.length === 0) {
+        resultsContainer.innerHTML = "<p>No user data found</p>";
         return;
     }
 
-    if (storedUsers) {
-        storedUsers.forEach(user => {
-            if (user.role === "user") {
-                // Create a section for each user
-                const userSection = document.createElement("div");
-                userSection.innerHTML = `<h3>${user.name}</h3>`;
+    storedUsers.forEach(user => {
+        if (user.role === "user") {
+            // Create user section
+            const userSection = document.createElement("div");
+            userSection.classList.add("user-section");
 
-                const userAnswers = user.answers || {};
+            // User header
+            const userHeader = document.createElement("div");
+            userHeader.classList.add("user-header");
+            userHeader.innerHTML = `
+                <h3>${user.name}</h3>
+                <span class="toggle-icon">+</span>
+            `;
+            userHeader.onclick = () => toggleCollapse(userHeader);
 
-                if (Object.keys(userAnswers).length > 0) {
-                    const questionResults = Object.entries(userAnswers).map(([questionId, status]) => {
-                        // Get the question index (e.g., q1 -> 0, q2 -> 1, etc.)
-                        const questionIndex = parseInt(questionId.replace('q', '')) - 1;
+            // User content
+            const userContent = document.createElement("div");
+            userContent.classList.add("user-content");
+            userContent.style.display = "none";
 
-                        // Ensure the question exists in randomizedQuestions
-                        if (randomizedQuestions[questionIndex]) {
-                            const question = randomizedQuestions[questionIndex];
-                            return `
-                                <p>
-                                    <strong>Question:</strong> ${question.question} <br>
-                                    <strong>Your Answer:</strong> ${status === "correct" ? "Correct" : "Wrong"} <br>
-                                    <strong>Correct Answer:</strong> ${question.options[question.correctOption]}
-                                </p>
+            // List attempts
+            if (user.attempts && user.attempts.length > 0) {
+                const attemptsList = document.createElement("ul");
+                attemptsList.style.listStyleType = "none";
+                attemptsList.style.padding = "0";
+
+                user.attempts.forEach(attempt => {
+                    const attemptItem = document.createElement("li");
+                    attemptItem.style.marginBottom = "10px";
+                    attemptItem.classList.add("attempt-section");
+
+                    // Attempt Header
+                    const attemptHeader = document.createElement("div");
+                    attemptHeader.classList.add("attempt-header");
+                    attemptHeader.innerHTML = `
+                        <p><strong>Attempt ID:</strong> ${attempt.id}</p>
+                        <p><strong>Date:</strong> ${attempt.date}</p>
+                        <p><strong>Score:</strong> ${attempt.score}%</p>
+                        <p><strong>Status:</strong> ${attempt.status}</p>
+                        <span class="toggle-icon">+</span>
+                    `;
+                    attemptHeader.onclick = () => toggleCollapse(attemptHeader);
+
+                    // Attempt Content
+                    const attemptContent = document.createElement("div");
+                    attemptContent.classList.add("attempt-content");
+                    attemptContent.style.display = "none";
+
+                    // Populate answers for this attempt
+                    if (attempt.answers && Object.keys(attempt.answers).length > 0) {
+                        Object.entries(attempt.answers).forEach(([questionId, answer]) => {
+                            const questionDetail = document.createElement("p");
+                            questionDetail.innerHTML = `
+                                <strong>Question:</strong> ${answer.question}<br>
+                                <strong>Your Answer:</strong> ${answer.selectedOption}<br>
+                                <strong>Correct Answer:</strong> ${answer.correctOption}
                             `;
-                        } else {
-                            return `<p>Question data not found for ${questionId}</p>`;
-                        }
-                    }).join("");
+                            attemptContent.appendChild(questionDetail);
+                        });
+                    } else {
+                        attemptContent.innerHTML = "<p>No answers recorded for this attempt.</p>";
+                    }
 
-                    userSection.innerHTML += questionResults;
-                } else {
-                    userSection.innerHTML += "<p>No answers yet</p>";
-                }
+                    // Append header and content to the attempt section
+                    attemptItem.appendChild(attemptHeader);
+                    attemptItem.appendChild(attemptContent);
+                    attemptsList.appendChild(attemptItem);
+                });
 
-                resultsContainer.appendChild(userSection);
+                userContent.appendChild(attemptsList);
+            } else {
+                userContent.innerHTML = "<p>No attempts yet</p>";
+            }
+
+            // Append header and content to user section
+            userSection.appendChild(userHeader);
+            userSection.appendChild(userContent);
+            resultsContainer.appendChild(userSection);
+        }
+    });
+}
+
+
+
+function setupSearchFunctionality() {
+    const searchBar = document.getElementById("searchBar");
+    const resultsContainer = document.getElementById("resultsContainer");
+
+    searchBar.addEventListener("input", () => {
+        const query = searchBar.value.toLowerCase(); // Get search query
+        const userSections = resultsContainer.getElementsByClassName("user-section");
+
+        Array.from(userSections).forEach(section => {
+            const userName = section.querySelector(".user-header h3").textContent.toLowerCase();
+
+            // Show or hide the section based on the query match
+            if (userName.includes(query)) {
+                section.style.display = "block";
+            } else {
+                section.style.display = "none";
             }
         });
+    });
+}
+
+
+function toggleCollapse(header) {
+    const section = header.parentElement;
+    const content = section.querySelector('.user-content, .attempt-content');
+    const toggleIcon = header.querySelector('.toggle-icon');
+
+    if (content.style.display === 'block') {
+        content.style.display = 'none';
+        toggleIcon.textContent = '+';
     } else {
-        resultsContainer.innerHTML = "<p>No user data found</p>";
+        content.style.display = 'block';
+        toggleIcon.textContent = '−';
     }
 }
+
 
 
 
@@ -5787,4 +5889,3 @@ function logout() {
 // Initialize
 shuffleAndSelectQuestions();
 displayQuestion(currentQuestionIndex);
-
